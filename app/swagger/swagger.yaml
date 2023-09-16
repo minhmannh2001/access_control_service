@@ -1,0 +1,314 @@
+swagger: "2.0"
+info:
+  description: This is the access control service used within the Discover Quest application.
+  version: "1.0.0"
+  title: Access Control Service
+  contact:
+    email: nguyenminhmannh2001@gmail.com
+
+schemes:
+  - http
+  - https
+
+basePath: /v1
+
+tags:
+  - name: Authentication
+    description: Endpoints for user authentication
+  - name: Authorization
+    description: Endpoints for user authorization and token management
+
+paths:
+  /index:
+    get:
+      operationId: index
+      security:
+        - JWT: []
+      responses:
+        200:
+          description: Decode access token successfully
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /register:
+    post:
+      tags:
+        - Authentication
+      summary: Register User
+      description: Register a new user with email and password
+      operationId: register
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: user_input
+          description: User registration information
+          required: true
+          schema:
+            $ref: "#/definitions/UserRegistration"
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Bad request
+        409:
+          description: Conflict, user already exists
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /request-verification-email:
+    post:
+      tags:
+        - Authentication
+      summary: Request Verification Email
+      description: Request a verification email to verify your account.
+      operationId: request_verification_email
+      security:
+        - JWT: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Verification email request successful
+        400:
+          description: Bad request
+        409:
+          description: Conflict, user has already been verified
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /verify-email:
+    get:
+      tags:
+        - Authentication
+      summary: Verify Email
+      description: Verify user's email address
+      operationId: verify_email
+      produces:
+        - application/json
+      parameters:
+        - name: verification_token
+          in: query
+          description: Email verification token
+          required: true
+          type: string
+      responses:
+        200:
+          description: Email verified successfully
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: Log In
+      description: Logs in a user with email and password
+      operationId: login
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: credentials
+          description: User credentials for login
+          required: true
+          schema:
+            $ref: '#/definitions/Credentials'
+      responses:
+        200:
+          description: User logged in successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: Log Out
+      description: Logs out the currently authenticated user.
+      operationId: logout
+      security:
+        - JWT: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: User logged out successfully
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh Authentication Token
+      description: Refreshes an authentication token using a refresh token
+      operationId: refresh
+      security:
+        - JWT: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Authentication token refreshed successfully
+          schema:
+            $ref: '#/definitions/RefreshTokenResponse'
+        401:
+          description: Unauthorized. The refresh token is invalid or has expired.
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset Password
+      description: Initiates the password reset process.
+      operationId: reset_password
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: reset_request
+          description: Password reset request object
+          required: true
+          schema:
+            $ref: '#/definitions/PasswordResetRequest'
+      responses:
+        200:
+          description: Password reset initiated
+        400:
+          description: Bad request
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+  /confirm-reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Confirm Password Reset
+      description: Confirms a password reset request.
+      operationId: confirm_password_reset
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: reset_confirmation
+          description: Password reset confirmation object
+          required: true
+          schema:
+            $ref: '#/definitions/PasswordResetConfirmation'
+      responses:
+        200:
+          description: Password reset confirmed
+        400:
+          description: Bad request
+        500:
+          description: Internal server error
+      x-swagger-router-controller: app.controllers.authentication_controller
+
+definitions:
+  UserRegistration:
+    type: object
+    required:
+      - email
+      - username
+      - password
+      - confirm_password
+    properties:
+      email:
+        type: string
+        format: email
+        example: john.doe@example.com
+      username:
+        type: string
+        example: johndoe
+      password:
+        type: string
+        format: password
+        example: secret123
+      confirm_password:
+        type: string
+        format: password
+        example: secret123
+  Credentials:
+    type: object
+    required:
+      - email
+      - password
+    properties:
+      email:
+        type: string
+        example: john.doe@example.com
+      password:
+        type: string
+        format: password
+        example: secret123
+  PasswordResetRequest:
+    type: object
+    required:
+      - email
+    properties:
+      email:
+        type: string
+        format: email
+        example: john.doe@example.com
+  PasswordResetConfirmation:
+    type: object
+    required:
+      - new_password
+      - confirm_new_password
+      - reset_token
+    properties:
+      new_password:
+        type: string
+        format: password
+        example: secret123
+      confirm_new_password:
+        type: string
+        format: password
+        example: secret123
+      reset_token:
+        type: string
+        example: eyJhbfsdfdfsR5cCI6IkpXVCJ9.eyJzdWIiOadqwrfsdfsdfZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKsfsdfsdfsdfsV_adQssw5sdf
+  RefreshTokenResponse:
+    type: object
+    properties:
+      access_token:
+        type: string
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+      refresh_token:
+        type: string
+        example: eyJhbfsdfdfsR5cCI6IkpXVCJ9.eyJzdWIiOadqwrfsdfsdfZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKsfsdfsdfsdfsV_adQssw5sdf
+
+securityDefinitions:
+  JWT:
+    type: apiKey
+    name: Authorization
+    in: header
+    x-apikeyInfoFunc: helpers.utils.decode_token
